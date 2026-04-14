@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Library Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --green-darkest: #0a2e1e;
+    --green-dark: #0f3d2e;
+    --green-mid: #1b5e20;
+    --green-soft: #2e7d32;
+    --green-light: #a5d6a7;
+    --green-pale: #e8f5e9;
+    --cream: #faf8f3;
+    --text: #1a1a1a;
+    --text-muted: #5a5a5a;
+    --border: rgba(0,0,0,0.1);
+    --red: #b71c1c;
+    --red-pale: #ffebee;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
+  h1, h2, h3 { font-family: 'Playfair Display', serif; }
+
+  /* ── SCENES ── */
+  .scene { display: none; animation: fadeIn 0.3s ease; }
+  .scene.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── LOGIN ── */
+  #scene-login { min-height: 100vh; display: none; align-items: center; justify-content: center; background: var(--green-darkest); }
+  #scene-login.active { display: flex; }
+  .login-box { background: var(--cream); border-radius: 20px; padding: 2.5rem 2rem; width: 100%; max-width: 380px; }
+  .login-logo { width: 52px; height: 52px; background: var(--green-dark); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; margin: 0 auto 1.25rem; }
+  .login-box h1 { text-align: center; font-size: 24px; color: var(--green-dark); margin-bottom: 4px; }
+  .login-box p { text-align: center; font-size: 13px; color: var(--text-muted); margin-bottom: 1.5rem; }
+  .form-group { margin-bottom: 1rem; }
+  .form-group label { font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px; }
+  .form-group input { width: 100%; padding: 11px 14px; border: 1px solid var(--border); border-radius: 10px; font-size: 15px; font-family: 'DM Sans', sans-serif; background: white; color: var(--text); outline: none; transition: border-color 0.2s; }
+  .form-group input:focus { border-color: var(--green-soft); }
+  .btn-primary { width: 100%; padding: 12px; background: var(--green-dark); color: var(--green-pale); border: none; border-radius: 10px; font-size: 15px; font-family: 'DM Sans', sans-serif; font-weight: 500; cursor: pointer; margin-top: 4px; transition: background 0.2s; }
+  .btn-primary:hover { background: var(--green-soft); }
+  .hint { font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 14px; }
+  .msg-error { background: var(--red-pale); color: var(--red); border-radius: 8px; padding: 9px 12px; font-size: 13px; margin-bottom: 12px; display: none; }
+  .msg-success { background: var(--green-pale); color: var(--green-mid); border-radius: 8px; padding: 9px 12px; font-size: 13px; margin-bottom: 12px; display: none; }
+
+  /* ── DASHBOARD ── */
+  #scene-home { min-height: 100vh; background: var(--cream); }
+  .top-bar { background: var(--green-darkest); color: var(--green-light); padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+  .top-bar h1 { font-size: 20px; color: var(--green-light); }
+  .top-bar span { font-size: 13px; }
+  .logout-btn { background: transparent; border: 1px solid var(--green-light); color: var(--green-light); padding: 6px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .logout-btn:hover { background: rgba(255,255,255,0.1); }
+  .stats-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 1.25rem 1.5rem; background: var(--green-dark); }
+  .stat { text-align: center; }
+  .stat-num { font-size: 28px; font-family: 'Playfair Display', serif; color: white; }
+  .stat-label { font-size: 12px; color: var(--green-light); margin-top: 2px; }
+  .menu-section { padding: 1.5rem; }
+  .menu-section h2 { font-size: 18px; color: var(--green-dark); margin-bottom: 1rem; }
+  .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .menu-card { background: white; border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem; cursor: pointer; transition: all 0.2s; text-align: left; }
+  .menu-card:hover { border-color: var(--green-soft); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(15,61,46,0.1); }
+  .menu-card .icon { font-size: 22px; margin-bottom: 10px; }
+  .menu-card .label { font-size: 14px; font-weight: 500; color: var(--text); }
+  .menu-card .desc { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+  /* ── INNER SCENES ── */
+  .inner-scene { min-height: 100vh; background: var(--cream); }
+  .inner-header { background: var(--green-dark); padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 14px; }
+  .back-btn { background: transparent; border: none; color: var(--green-light); font-size: 20px; cursor: pointer; line-height: 1; }
+  .inner-header h2 { font-size: 20px; color: white; }
+  .inner-body { padding: 1.5rem; }
+  .card { background: white; border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem; margin-bottom: 1rem; }
+  .btn-green { width: 100%; padding: 12px; background: var(--green-mid); color: white; border: none; border-radius: 10px; font-size: 15px; font-family: 'DM Sans', sans-serif; font-weight: 500; cursor: pointer; margin-top: 4px; transition: background 0.2s; }
+  .btn-green:hover { background: var(--green-soft); }
+  .btn-outline { width: 100%; padding: 11px; background: transparent; color: var(--text); border: 1px solid var(--border); border-radius: 10px; font-size: 15px; font-family: 'DM Sans', sans-serif; cursor: pointer; margin-top: 8px; transition: background 0.2s; }
+  .btn-outline:hover { background: var(--green-pale); }
+
+  /* ── BOOK ROWS ── */
+  .book-row { display: flex; align-items: center; justify-content: space-between; padding: 13px 0; border-bottom: 1px solid var(--border); }
+  .book-row:last-child { border-bottom: none; }
+  .book-title { font-size: 15px; font-weight: 500; }
+  .book-meta { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+  .badge { font-size: 11px; padding: 4px 10px; border-radius: 99px; font-weight: 500; white-space: nowrap; }
+  .badge-available { background: var(--green-pale); color: var(--green-mid); }
+  .badge-borrowed { background: var(--red-pale); color: var(--red); }
+  .action-btns { display: flex; gap: 6px; flex-shrink: 0; margin-left: 10px; }
+  .btn-act { padding: 6px 12px; border-radius: 8px; font-size: 12px; font-family: 'DM Sans', sans-serif; cursor: pointer; border: none; font-weight: 500; white-space: nowrap; }
+  .btn-borrow { background: var(--green-pale); color: var(--green-mid); }
+  .btn-borrow:hover { background: var(--green-light); }
+  .btn-return { background: var(--red-pale); color: var(--red); }
+  .btn-return:hover { background: #ffcdd2; }
+  .btn-remove { background: #eceff1; color: #37474f; }
+  .btn-remove:hover { background: #cfd8dc; }
+  .empty-state { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 14px; }
+</style>
+</head>
+<body>
+
+<!-- SCENE 1: LOGIN -->
+<div id="scene-login" class="scene active">
+  <div class="login-box">
+    <div class="login-logo">📚</div>
+    <h1>Library System</h1>
+    <p>Librarian portal</p>
+    <div id="login-error" class="msg-error">Incorrect username or password.</div>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="login-user" placeholder="Enter username" />
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()" />
+    </div>
+    <button class="btn-primary" onclick="doLogin()">Sign in</button>
+    <p class="hint">Demo: <strong>admin</strong> / <strong>1234</strong></p>
+  </div>
+</div>
+
+<!-- SCENE 2: DASHBOARD -->
+<div id="scene-home" class="scene">
+  <div class="top-bar">
+    <h1>📚 Library Dashboard</h1>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span id="welcome-name">Welcome</span>
+      <button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total books</div></div>
+    <div class="stat"><div class="stat-num" id="stat-available">0</div><div class="stat-label">Available</div></div>
+    <div class="stat"><div class="stat-num" id="stat-borrowed">0</div><div class="stat-label">Borrowed</div></div>
+  </div>
+  <div class="menu-section">
+    <h2>What would you like to do?</h2>
+    <div class="menu-grid">
+      <div class="menu-card" onclick="showScene('scene-add')">
+        <div class="icon">➕</div>
+        <div class="label">Add book</div>
+        <div class="desc">Add a new book</div>
+      </div>
+      <div class="menu-card" onclick="showScene('scene-remove')">
+        <div class="icon">🗑️</div>
+        <div class="label">Remove book</div>
+        <div class="desc">Delete from library</div>
+      </div>
+      <div class="menu-card" onclick="showScene('scene-display')">
+        <div class="icon">📋</div>
+        <div class="label">View all books</div>
+        <div class="desc">See full catalogue</div>
+      </div>
+      <div class="menu-card" onclick="showScene('scene-borrow')">
+        <div class="icon">📤</div>
+        <div class="label">Borrow book</div>
+        <div class="desc">Mark as borrowed</div>
+      </div>
+      <div class="menu-card" onclick="showScene('scene-return')">
+        <div class="icon">📥</div>
+        <div class="label">Return book</div>
+        <div class="desc">Mark as returned</div>
+      </div>
+      <div class="menu-card" onclick="showScene('scene-display')">
+        <div class="icon">🔍</div>
+        <div class="label">Borrowed list</div>
+        <div class="desc">View borrowed books</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCENE 3: ADD BOOK -->
+<div id="scene-add" class="scene inner-scene">
+  <div class="inner-header">
+    <button class="back-btn" onclick="showScene('scene-home')">←</button>
+    <h2>Add a book</h2>
+  </div>
+  <div class="inner-body">
+    <div class="card">
+      <div id="add-success" class="msg-success">✓ Book added to library!</div>
+      <div class="form-group">
+        <label>Title</label>
+        <input type="text" id="add-title" placeholder="Book title" />
+      </div>
+      <div class="form-group">
+        <label>Author</label>
+        <input type="text" id="add-author" placeholder="Author name" />
+      </div>
+      <div class="form-group">
+        <label>Genre</label>
+        <input type="text" id="add-genre" placeholder="e.g. Fiction, Science, History" />
+      </div>
+      <button class="btn-green" onclick="addBook()">Add book</button>
+      <button class="btn-outline" onclick="showScene('scene-home')">Back to dashboard</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCENE 3: DISPLAY ALL BOOKS -->
+<div id="scene-display" class="scene inner-scene">
+  <div class="inner-header">
+    <button class="back-btn" onclick="showScene('scene-home')">←</button>
+    <h2>All books</h2>
+  </div>
+  <div class="inner-body">
+    <div class="card" id="display-list"></div>
+    <button class="btn-outline" onclick="showScene('scene-home')">Back to dashboard</button>
+  </div>
+</div>
+
+<!-- SCENE 3: REMOVE BOOK -->
+<div id="scene-remove" class="scene inner-scene">
+  <div class="inner-header">
+    <button class="back-btn" onclick="showScene('scene-home')">←</button>
+    <h2>Remove a book</h2>
+  </div>
+  <div class="inner-body">
+    <div class="card" id="remove-list"></div>
+    <button class="btn-outline" onclick="showScene('scene-home')">Back to dashboard</button>
+  </div>
+</div>
+
+<!-- SCENE 3: BORROW -->
+<div id="scene-borrow" class="scene inner-scene">
+  <div class="inner-header">
+    <button class="back-btn" onclick="showScene('scene-home')">←</button>
+    <h2>Borrow a book</h2>
+  </div>
+  <div class="inner-body">
+    <div class="card" id="borrow-list"></div>
+    <button class="btn-outline" onclick="showScene('scene-home')">Back to dashboard</button>
+  </div>
+</div>
+
+<!-- SCENE 3: RETURN -->
+<div id="scene-return" class="scene inner-scene">
+  <div class="inner-header">
+    <button class="back-btn" onclick="showScene('scene-home')">←</button>
+    <h2>Return a book</h2>
+  </div>
+  <div class="inner-body">
+    <div class="card" id="return-list"></div>
+    <button class="btn-outline" onclick="showScene('scene-home')">Back to dashboard</button>
+  </div>
+</div>
+
+<script>
+// ── DATABASE (localStorage) ──
+function loadBooks() {
+  const data = localStorage.getItem('lms_books');
+  if (!data) {
+    const defaults = [
+      { title: "The Great Gatsby", author: "F. Scott Fitzgerald", genre: "Fiction", borrowed: false },
+      { title: "Sapiens", author: "Yuval Noah Harari", genre: "History", borrowed: true },
+      { title: "Clean Code", author: "Robert C. Martin", genre: "Technology", borrowed: false }
+    ];
+    saveBooks(defaults);
+    return defaults;
+  }
+  return JSON.parse(data);
+}
+
+function saveBooks(books) {
+  localStorage.setItem('lms_books', JSON.stringify(books));
+}
+
+let books = loadBooks();
+
+// ── SCENE NAVIGATION ──
+function showScene(id) {
+  document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'scene-home') updateStats();
+  if (id === 'scene-display') renderDisplay();
+  if (id === 'scene-remove') renderRemove();
+  if (id === 'scene-borrow') renderBorrow();
+  if (id === 'scene-return') renderReturn();
+}
+
+// ── AUTH ──
+function doLogin() {
+  const u = document.getElementById('login-user').value.trim();
+  const p = document.getElementById('login-pass').value.trim();
+  const err = document.getElementById('login-error');
+  if (u === 'admin' && p === '1234') {
+    err.style.display = 'none';
+    document.getElementById('welcome-name').textContent = 'Welcome, ' + u;
+    showScene('scene-home');
+  } else {
+    err.style.display = 'block';
+  }
+}
+
+function doLogout() {
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+  showScene('scene-login');
+}
+
+// ── STATS ──
+function updateStats() {
+  books = loadBooks();
+  document.getElementById('stat-total').textContent = books.length;
+  document.getElementById('stat-available').textContent = books.filter(b => !b.borrowed).length;
+  document.getElementById('stat-borrowed').textContent = books.filter(b => b.borrowed).length;
+}
+
+// ── ADD BOOK ──
+function addBook() {
+  const t = document.getElementById('add-title').value.trim();
+  const a = document.getElementById('add-author').value.trim();
+  const g = document.getElementById('add-genre').value.trim();
+  const msg = document.getElementById('add-success');
+  if (!t || !a || !g) { alert('All fields are required.'); return; }
+  books.push({ title: t, author: a, genre: g, borrowed: false });
+  saveBooks(books);
+  document.getElementById('add-title').value = '';
+  document.getElementById('add-author').value = '';
+  document.getElementById('add-genre').value = '';
+  msg.style.display = 'block';
+  setTimeout(() => msg.style.display = 'none', 2500);
+}
+
+// ── DISPLAY ALL ──
+function renderDisplay() {
+  books = loadBooks();
+  const el = document.getElementById('display-list');
+  if (!books.length) { el.innerHTML = '<div class="empty-state">No books in library yet.</div>'; return; }
+  el.innerHTML = books.map((b, i) => `
+    <div class="book-row">
+      <div>
+        <div class="book-title">${b.title}</div>
+        <div class="book-meta">${b.author} &middot; ${b.genre}</div>
+      </div>
+      <span class="badge ${b.borrowed ? 'badge-borrowed' : 'badge-available'}">${b.borrowed ? 'Borrowed' : 'Available'}</span>
+    </div>`).join('');
+}
+
+// ── REMOVE ──
+function renderRemove() {
+  books = loadBooks();
+  const el = document.getElementById('remove-list');
+  if (!books.length) { el.innerHTML = '<div class="empty-state">No books to remove.</div>'; return; }
+  el.innerHTML = books.map((b, i) => `
+    <div class="book-row">
+      <div>
+        <div class="book-title">${b.title}</div>
+        <div class="book-meta">${b.author}</div>
+      </div>
+      <button class="btn-act btn-remove" onclick="removeBook(${i})">Remove</button>
+    </div>`).join('');
+}
+
+function removeBook(i) {
+  if (confirm('Remove "' + books[i].title + '" from the library?')) {
+    books.splice(i, 1);
+    saveBooks(books);
+    renderRemove();
+  }
+}
+
+// ── BORROW ──
+function renderBorrow() {
+  books = loadBooks();
+  const el = document.getElementById('borrow-list');
+  const available = books.filter(b => !b.borrowed);
+  if (!available.length) { el.innerHTML = '<div class="empty-state">No available books to borrow.</div>'; return; }
+  el.innerHTML = books.map((b, i) => b.borrowed ? '' : `
+    <div class="book-row">
+      <div>
+        <div class="book-title">${b.title}</div>
+        <div class="book-meta">${b.author} &middot; ${b.genre}</div>
+      </div>
+      <button class="btn-act btn-borrow" onclick="borrowBook(${i})">Borrow</button>
+    </div>`).join('');
+}
+
+function borrowBook(i) {
+  books[i].borrowed = true;
+  saveBooks(books);
+  renderBorrow();
+}
+
+// ── RETURN ──
+function renderReturn() {
+  books = loadBooks();
+  const el = document.getElementById('return-list');
+  const borrowed = books.filter(b => b.borrowed);
+  if (!borrowed.length) { el.innerHTML = '<div class="empty-state">No borrowed books to return.</div>'; return; }
+  el.innerHTML = books.map((b, i) => !b.borrowed ? '' : `
+    <div class="book-row">
+      <div>
+        <div class="book-title">${b.title}</div>
+        <div class="book-meta">${b.author} &middot; ${b.genre}</div>
+      </div>
+      <button class="btn-act btn-return" onclick="returnBook(${i})">Return</button>
+    </div>`).join('');
+}
+
+function returnBook(i) {
+  books[i].borrowed = false;
+  saveBooks(books);
+  renderReturn();
+}
+</script>
+</body>
+</html>
